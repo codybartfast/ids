@@ -10,9 +10,9 @@ using Fmbm.Text;
 // Console.WriteLine(num);
 // Console.WriteLine(id2);
 
-var id = new ID("", ID.CharSets.Digits, true);
+var id = new ID("", "10", ZeroChar.True);
 
-for (int i = 0; i < 10; i++)
+for (int i = 0; i < 13; i++)
 {
     Console.WriteLine(id.Next());
 }
@@ -20,9 +20,14 @@ for (int i = 0; i < 10; i++)
 var json = JsonSerializer.Serialize(id);
 Console.WriteLine(json);
 
-id = JsonSerializer.Deserialize<ID>(json)!;
+var id2 = JsonSerializer.Deserialize<ID>(json)!;
 
-for (int i = 0; i < 10; i++)
+for (int i = 0; i < 6; i++)
 {
-    Console.WriteLine(id.Next());
+    Console.WriteLine(id2.Next());
 }
+
+var x = 0;
+var y = 1;
+Console.WriteLine(x.CompareTo(y));
+Console.WriteLine(id2.Compare(x.ToString(), y.ToString()));

@@ -2,7 +2,14 @@
 
 namespace Fmbm.Text;
 
-public partial class ID
+public enum ZeroChar
+{
+    Auto = 0,
+    True = 1,
+    False = 2
+}
+
+public partial class ID : IComparer<string>
 {
     internal static Dictionary<char, int> MakeDict(string chars)
     {
@@ -46,32 +53,36 @@ public partial class ID
     }
 
     readonly string chars;
-    readonly bool zeroChar;
+    readonly bool haveZeroChar;
 
 
-    readonly List<int> lastIndexes;
+    readonly List<int> indexes
+    ;
     readonly object lockObj = new object();
 
-    public ID(string last, string chars, bool zeroChar)
+    public ID(string last, string chars, ZeroChar zeroChar = ZeroChar.Auto)
     {
         // last only contains chars
         // at least two chars
         // zeroChar is char
         // last no leading zero
-        this.chars = ID.CharSets.Digits;
-        this.zeroChar = true;
-        this.lastIndexes = new List<int>(
-            last.Reverse<char>().Select(c => chars.IndexOf(c)));
+        this.chars = chars;
+        this.haveZeroChar = zeroChar switch
+        {
+            ZeroChar.Auto => chars[0] == '0',
+            ZeroChar.True => true,
+            ZeroChar.False => false,
+            _ => throw new Exception($"Unexpected ZeroChar value: {zeroChar}") // XXX
+        };
+        this.indexes = new List<int>(last.Select(c => chars.IndexOf(c)));
         this.Last = last;
+        this.CharIndexDict = MakeDict(chars);
     }
-
-    // public ID(string last, string chars)
-    //     : this(last, chars, chars[0] == '0') { }
 
     public string Last { get; private set; }
     public string Chars => chars;
-    public bool ZeroChar => zeroChar;
-
+    public ZeroChar ZeroChar => haveZeroChar ? ZeroChar.True : ZeroChar.False;
+    Dictionary<char, int> CharIndexDict { get; }
 
     public string Next()
     {
@@ -82,24 +93,71 @@ public partial class ID
     {
         lock (lockObj)
         {
-            for (var i = 0; i < lastIndexes.Count; i++)
+            for (var i = indexes
+            .Count - 1; i >= 0; i--)
             {
-                if (lastIndexes[i] < chars.Length - 1)
+                if (indexes
+                [i] < chars.Length - 1)
                 {
-                    lastIndexes[i] += 1;
+                    indexes[i] += 1;
                     return SetLastFromIndexes();
                 }
-                lastIndexes[i] = 0;
+                indexes[i] = 0;
             }
-            lastIndexes.Add(zeroChar && lastIndexes.Count > 0 ? 1 : 0);
+            indexes.Insert(0, haveZeroChar && indexes.Count > 0 ? 1 : 0);
             return SetLastFromIndexes();
         }
     }
 
     string SetLastFromIndexes()
     {
-        var cs = lastIndexes.Reverse<int>().Select(i => chars[i]);
+
+        var cs = indexes.Select(i =>
+        {
+            // Console.WriteLine(i);
+            return chars[i];
+        });
         Last = new string(cs.ToArray());
         return Last;
+    }
+
+    public int Compare(string? x, string? y)
+    {
+        return (x, y) switch
+        {
+            (null, null) => 0,
+            (_, null) => 1,
+            (null, _) => -1,
+            (_, _) => CompareNonNull(x, y)
+        };
+
+        int CompareNonNull(string x, string y)
+        {
+            var lengthDiff = x.Length - y.Length;
+            if (lengthDiff != 0)
+            {
+                if (!haveZeroChar)
+                {
+                    return lengthDiff;
+                }
+                var longer = lengthDiff > 0 ? x : y;
+                for (var i = longer.Length - lengthDiff; i < longer.Length; i++)
+                {
+                    if (longer[i] != chars[0])
+                    {
+                        return lengthDiff;
+                    }
+                }
+            }
+            for (var i = Math.Min(x.Length, y.Length) - 1; i >= 0; i++)
+            {
+                if (x[i] != y[i])
+                {
+                    return CharIndexDict[x[i]] - CharIndexDict[y[i]];
+
+                }
+            }
+            return 0;
+        }
     }
 }
