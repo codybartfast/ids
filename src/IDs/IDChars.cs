@@ -7,7 +7,7 @@ public static class IDChars
     public static string HexLower { get; } = "0123456789abcdef";
     public static string HexUpper { get; } = "0123456789abcdef";
     public static string Lower { get; } = "abcdefghijklmnopqrstuvwxyz";
-    public static string Upper { get; } = "ABCDEFGHIJKLMONPQRSTUVWXYZ";
+    public static string Upper { get; } = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     public static string DigitsAndLower { get; } = Digits + Lower;
     public static string DigitsAndUpper { get; } = Digits + Upper;
     public static string DigitsAndLowerAndUpper { get; } = DigitsAndLower + Upper;
