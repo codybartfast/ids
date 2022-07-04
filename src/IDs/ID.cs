@@ -1,17 +1,18 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 namespace Fmbm.Text;
 
-public enum ZeroChar
+public enum HasZero
 {
     Auto = 0,
     True = 1,
     False = 2
 }
 
-public partial class ID : IComparer<string>
+public partial class ID : IComparer<string>, IEqualityComparer<string>
 {
-    internal static Dictionary<char, int> MakeDict(string chars)
+    static Dictionary<char, int> MakeDict(string chars)
     {
         var dict = new Dictionary<char, int>();
         for (var i = 0; i < chars.Length; i++)
@@ -21,67 +22,50 @@ public partial class ID : IComparer<string>
         return dict;
     }
 
-    internal static string NumToString(BigInteger num, string chars)
-    {
-        var id = new List<char>();
-        while (num > 0)
-        {
-            int n = (int)(num % chars.Length);
-            id.Add(chars[n]);
-            num /= chars.Length;
-        }
-        id.Reverse();
-        return new string(id.ToArray());
-    }
+    string chars;
+    public string Chars => chars;
 
-    internal static BigInteger StringToNum(
-        string id, string chars)
-    {
-        return StringToNum(id, MakeDict(chars));
-    }
-
-    internal static BigInteger StringToNum(
-        string id, Dictionary<char, int> charDict)
-    {
-        BigInteger step = 1;
-        BigInteger num = 0;
-        for (int i = id.Length - 1; i >= 0; i--, step *= charDict.Count)
-        {
-            num += step * charDict[id[i]];
-        }
-        return num;
-    }
-
-    readonly string chars;
-    readonly bool haveZeroChar;
+    string last;
+    public string Last => last;
 
 
-    readonly List<int> indexes
-    ;
+    readonly List<int> indexes;
     readonly object lockObj = new object();
 
-    public ID(string last, string chars, ZeroChar zeroChar = ZeroChar.Auto)
+    readonly bool hasZero;
+    public HasZero HasZero => hasZero ? HasZero.True : HasZero.False;
+
+    public ID(string last, string? chars, HasZero hasZero = HasZero.Auto)
     {
-        // last only contains chars
-        // at least two chars
-        // zeroChar is char
-        // last no leading zero
-        this.chars = chars;
-        this.haveZeroChar = zeroChar switch
+        chars = chars ?? IDChars.Digits;
+        if (chars.Length < 2)
         {
-            ZeroChar.Auto => chars[0] == '0',
-            ZeroChar.True => true,
-            ZeroChar.False => false,
-            _ => throw new Exception($"Unexpected ZeroChar value: {zeroChar}") // XXX
+            throw new IDException($"'chars' must have at least members");
+        }
+        if (chars.Length > chars.Distinct().Count())
+        {
+            throw new IDException($"'chars' contains duplicate characters");
+        }
+        this.chars = chars;
+        this.hasZero = hasZero switch
+        {
+            HasZero.Auto => chars[0] == '0',
+            HasZero.True => true,
+            HasZero.False => false,
+            _ => throw new IDException($"Unexpected ZeroChar value: {hasZero}")
         };
         this.indexes = new List<int>(last.Select(c => chars.IndexOf(c)));
-        this.Last = last;
+        foreach (var c in last)
+        {
+            if (!this.chars.Contains(c))
+            {
+                throw new IDException($"Unexpected character '{c}' in last.");
+            }
+        }
+        this.last = last;
         this.CharIndexDict = MakeDict(chars);
     }
 
-    public string Last { get; private set; }
-    public string Chars => chars;
-    public ZeroChar ZeroChar => haveZeroChar ? ZeroChar.True : ZeroChar.False;
     Dictionary<char, int> CharIndexDict { get; }
 
     public string Next()
@@ -104,7 +88,7 @@ public partial class ID : IComparer<string>
                 }
                 indexes[i] = 0;
             }
-            indexes.Insert(0, haveZeroChar && indexes.Count > 0 ? 1 : 0);
+            indexes.Insert(0, hasZero && indexes.Count > 0 ? 1 : 0);
             return SetLastFromIndexes();
         }
     }
@@ -112,13 +96,9 @@ public partial class ID : IComparer<string>
     string SetLastFromIndexes()
     {
 
-        var cs = indexes.Select(i =>
-        {
-            // Console.WriteLine(i);
-            return chars[i];
-        });
-        Last = new string(cs.ToArray());
-        return Last;
+        var cs = indexes.Select(i => chars[i]);
+        last = new string(cs.ToArray());
+        return last;
     }
 
     public int Compare(string? x, string? y)
@@ -133,31 +113,45 @@ public partial class ID : IComparer<string>
 
         int CompareNonNull(string x, string y)
         {
-            var lengthDiff = x.Length - y.Length;
-            if (lengthDiff != 0)
+            int xInd = 0, yInd = 0;
+            if (hasZero)
             {
-                if (!haveZeroChar)
+                while (xInd < x.Length - 1 && x[xInd] == chars[0])
                 {
-                    return lengthDiff;
+                    xInd++;
                 }
-                var longer = lengthDiff > 0 ? x : y;
-                for (var i = longer.Length - lengthDiff; i < longer.Length; i++)
+                while (yInd < y.Length - 1 && y[yInd] == chars[0])
                 {
-                    if (longer[i] != chars[0])
-                    {
-                        return lengthDiff;
-                    }
+                    yInd++;
                 }
             }
-            for (var i = Math.Min(x.Length, y.Length) - 1; i >= 0; i++)
+            int xSig = x.Length - xInd, ySig = y.Length - yInd;
+            if (xSig != ySig)
             {
-                if (x[i] != y[i])
-                {
-                    return CharIndexDict[x[i]] - CharIndexDict[y[i]];
-
-                }
+                return xSig - ySig;
             }
-            return 0;
+            else if (xSig == 0)
+            {
+                return 0;
+            }
+            else
+            {
+                while (x[xInd] == y[yInd] && xInd < x.Length - 1)
+                {
+                    xInd++; yInd++;
+                }
+                return CharIndexDict[x[xInd]] - CharIndexDict[y[yInd]];
+            }
         }
+    }
+
+    public bool Equals(string? x, string? y)
+    {
+        return Compare(x, y) == 0;
+    }
+
+    public int GetHashCode([DisallowNull] string obj)
+    {
+        return obj.GetHashCode();
     }
 }
