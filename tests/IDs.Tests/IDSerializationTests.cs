@@ -48,5 +48,4 @@ public class IDSerializationTests
         var last = DeserializedRestartsAsExpected(HasZero.False);
         Assert.Equal("920", last);
     }
-
 }

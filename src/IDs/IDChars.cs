@@ -1,6 +1,5 @@
 namespace Fmbm.Text;
 
-
 public static class IDChars
 {
     public static string Digits { get; } = "0123456789";

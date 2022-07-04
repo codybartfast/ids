@@ -79,5 +79,4 @@ public class IDConstructorTests
         Action twoChars = () => new ID("", "1");
         Assert.Throws<IDException>(twoChars);
     }
-
 }

@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
 
 namespace Fmbm.Text;
 
@@ -29,18 +28,19 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
     public string Last => last;
 
 
-    readonly List<int> indexes;
-    readonly object lockObj = new object();
-
     readonly bool hasZero;
     public HasZero HasZero => hasZero ? HasZero.True : HasZero.False;
 
-    public ID(string last, string? chars, HasZero hasZero = HasZero.Auto)
+    readonly List<int> indexes;
+    Dictionary<char, int> charIndexDict;
+    readonly object lockObj = new object();
+
+    public ID(string last, string? chars = null, HasZero hasZero = HasZero.Auto)
     {
         chars = chars ?? IDChars.Digits;
         if (chars.Length < 2)
         {
-            throw new IDException($"'chars' must have at least members");
+            throw new IDException($"'chars' must have at least 2 members");
         }
         if (chars.Length > chars.Distinct().Count())
         {
@@ -59,43 +59,40 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
         {
             if (!this.chars.Contains(c))
             {
-                throw new IDException($"Unexpected character '{c}' in last.");
+                throw new IDException($"Unexpected character '{c}' in 'last'.");
             }
         }
         this.last = last;
-        this.CharIndexDict = MakeDict(chars);
+        this.charIndexDict = MakeDict(chars);
     }
-
-    Dictionary<char, int> CharIndexDict { get; }
 
     public string Next()
     {
-        return Increment();
-    }
-
-    internal string Increment()
-    {
         lock (lockObj)
         {
-            for (var i = indexes
-            .Count - 1; i >= 0; i--)
-            {
-                if (indexes
-                [i] < chars.Length - 1)
-                {
-                    indexes[i] += 1;
-                    return SetLastFromIndexes();
-                }
-                indexes[i] = 0;
-            }
-            indexes.Insert(0, hasZero && indexes.Count > 0 ? 1 : 0);
-            return SetLastFromIndexes();
+            return Increment();
         }
+    }
+
+    string Increment()
+    {
+        for (var i = indexes
+        .Count - 1; i >= 0; i--)
+        {
+            if (indexes
+            [i] < chars.Length - 1)
+            {
+                indexes[i] += 1;
+                return SetLastFromIndexes();
+            }
+            indexes[i] = 0;
+        }
+        indexes.Insert(0, hasZero && indexes.Count > 0 ? 1 : 0);
+        return SetLastFromIndexes();
     }
 
     string SetLastFromIndexes()
     {
-
         var cs = indexes.Select(i => chars[i]);
         last = new string(cs.ToArray());
         return last;
@@ -113,7 +110,8 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
 
         int CompareNonNull(string x, string y)
         {
-            int xInd = 0, yInd = 0;
+            var xInd = 0;
+            var yInd = 0;
             if (hasZero)
             {
                 while (xInd < x.Length - 1 && x[xInd] == chars[0])
@@ -125,22 +123,26 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
                     yInd++;
                 }
             }
-            int xSig = x.Length - xInd, ySig = y.Length - yInd;
-            if (xSig != ySig)
+            var significantX = x.Length - xInd;
+            var significantY = y.Length - yInd;
+            if (significantX != significantY)
             {
-                return xSig - ySig;
+                return significantX - significantY;
             }
-            else if (xSig == 0)
+            else if (significantX == 0)
             {
                 return 0;
             }
             else
             {
-                while (x[xInd] == y[yInd] && xInd < x.Length - 1)
+                for (; xInd < x.Length; xInd++, yInd++)
                 {
-                    xInd++; yInd++;
+                    if (x[xInd] != y[yInd])
+                    {
+                        return charIndexDict[x[xInd]] - charIndexDict[y[yInd]];
+                    }
                 }
-                return CharIndexDict[x[xInd]] - CharIndexDict[y[yInd]];
+                return 0;
             }
         }
     }
@@ -150,8 +152,8 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
         return Compare(x, y) == 0;
     }
 
-    public int GetHashCode([DisallowNull] string obj)
+    public int GetHashCode([DisallowNull] string str)
     {
-        return obj.GetHashCode();
+        return str.GetHashCode();
     }
 }
