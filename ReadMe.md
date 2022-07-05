@@ -144,7 +144,7 @@ Length of IDs
 More charactes will enable shorter ids, but may be less readable.  As examples,
 here is the 50,000,000th id produced by diffent sets.
 
-```chsharp
+```csharp
 var id = new ID(chars: IDChars.Binary);
 for(int i = 0; i < 50_000_000; i++){
     id.Next();
@@ -156,7 +156,9 @@ Console.WriteLine($"{id.Last}");
 ```
 
 ```text
-Binary:         100110001001011001111111
+Chars           50,000,000th ID
+=====           ===============
+Binary:         10111110101111000001111111
 Dog!:           oggoogog!Dgg! 
 Decimal:        49999999
 Hex:            2FAF07F
@@ -164,5 +166,57 @@ LessAmbiguous:  32qujp
 Base64:         B9uA_
 AsciiPrintable: Y=.j
 ```
+
+Numeric IDs
+-----------
+
+With Base64 characters the first two char id is `"AA"`.  However, with
+decimal characters the first two char id is `"10"` not `"00"`.  If we consider
+id strings as representing numbers then `"0"`, `"00"` and `"000"` represent the same number, `0`.  To avoid ambiguity or duplication we typically do not want to
+generate `"00"` and `"000"` as ids.
+
+But `"A"`, `"AA"` and `"AAA"` are typically consdered different ids (as with
+spreadsheet columns) and we do want to generate them.
+
+These are called  _numeric_ and _nonnumeric_ behaviour.  Numeric behaviour
+treats the first character in `chars` as a zero and it will only be the leftmost character for the first id.  Nonnumeric behaviour makes no distinction for the
+first character.  If the first char in the character set is `"0"` then the
+behaviour is numeric, otherwise it is nonnumeric.  E.g., `Binary`, `Decimal` and
+`HexUpper` ("01", "0123456789" and "0123456789ABCDEF") all start with `0` and so
+the behaviour is numeric. `Base64` (`"ABC..."`) starts with `"A"` so the
+behaviour is nonnumeric.
+
+This behaviour can be overriden by specifying the numeric argument as `True`,
+`False` or `Auto`. To specify nonnumeric behaviour:
+
+```csharp
+var id = new ID(last: "7", chars: IDChars.Decimal, numeric: Numeric.False);
+
+for(int i = 0; i < 4; i++){
+    Console.WriteLine(id.Next());
+}
+
+// Output:
+// 8
+// 9
+// 00  <-- "9" is followed by "00" insted of "10"
+// 01
+```
+
+Similarly letters can be treated numerically so that `A` is acts like a zero.
+
+```csharp
+var id = new ID(last: "X", chars: IDChars.Upper, numeric: Numeric.True);
+for(int i = 0; i < 4; i++){
+    Console.WriteLine(id.Next());
+}
+
+// Output:
+// Y
+// Z
+// BA  <-- Z is followed by "BA" instead of  "AA"
+// BB
+```
+
 
 compare
