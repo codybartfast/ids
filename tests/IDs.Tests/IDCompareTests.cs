@@ -10,9 +10,9 @@ public class IDCompareTests
     bool IsPos(int n) { return n > 0; }
 
     [Fact]
-    public void WithZeroIdIsWellOrdered()
+    public void NumericIdIsWellOrdered()
     {
-        var id = new ID(string.Empty, IDChars.AsciiPrintable, HasZero.True);
+        var id = new ID(string.Empty, IDChars.AsciiPrintable, Numeric.True);
         for (int i = 0; i < 10000; i++)
         {
             var previous = id.Last;
@@ -24,9 +24,9 @@ public class IDCompareTests
     }
 
     [Fact]
-    public void WithoutZeroIdIsWellOrdered()
+    public void NonNumericIdIsWellOrdered()
     {
-        var id = new ID(string.Empty, IDChars.AsciiPrintable, HasZero.False);
+        var id = new ID(string.Empty, IDChars.AsciiPrintable, Numeric.False);
         for (int i = 0; i < 10000; i++)
         {
             var previous = id.Last;
@@ -38,9 +38,9 @@ public class IDCompareTests
     }
 
     [Fact]
-    public void WithZeroIdIsWellOrderedWhenPadded()
+    public void NumericIdIsWellOrderedWhenPadded()
     {
-        var id = new ID("010", IDChars.Digits, HasZero.True);
+        var id = new ID("010", IDChars.Decimal, Numeric.True);
         for (int i = 0; i < 10000; i++)
         {
             var previous = id.Last;
@@ -52,9 +52,9 @@ public class IDCompareTests
     }
 
     [Fact]
-    public void WithoutZeroIdIsWellOrderedWhenPadded()
+    public void NonNumericIdIsWellOrderedWhenPadded()
     {
-        var id = new ID("010", IDChars.AsciiPrintable, HasZero.False);
+        var id = new ID("010", IDChars.AsciiPrintable, Numeric.False);
         for (int i = 0; i < 10000; i++)
         {
             var previous = id.Last;

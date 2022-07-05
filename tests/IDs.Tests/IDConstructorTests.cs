@@ -15,11 +15,11 @@ public class IDConstructorTests
     [InlineData("1234", "1235")]
     public void LastAsExpected(string last, string next)
     {
-        var idT = new ID(last, IDChars.Digits, HasZero.True);
+        var idT = new ID(last, IDChars.Decimal, Numeric.True);
         Assert.Equal(last, idT.Last);
         Assert.Equal(next, idT.Next());
         Assert.Equal(next, idT.Last);
-        var idF = new ID(last, IDChars.Digits, HasZero.False);
+        var idF = new ID(last, IDChars.Decimal, Numeric.False);
         Assert.Equal(last, idF.Last);
     }
 
@@ -32,7 +32,7 @@ public class IDConstructorTests
     {
         string GetLast(string last, string chars)
         {
-            var id = new ID(last, chars, HasZero.True);
+            var id = new ID(last, chars, Numeric.True);
             for (var i = 0; i < 1000; i++)
             {
                 id.Next();
@@ -43,26 +43,26 @@ public class IDConstructorTests
     }
 
     [Theory]
-    [InlineData("", "0123456789", HasZero.Auto, "0")]
-    [InlineData("", "0123456789", HasZero.False, "0")]
-    [InlineData("", "0123456789", HasZero.True, "0")]
-    [InlineData("9", "0123456789", HasZero.Auto, "10")]
-    [InlineData("9", "0123456789", HasZero.False, "00")]
-    [InlineData("9", "0123456789", HasZero.True, "10")]
-    [InlineData("9", "Z123456789", HasZero.Auto, "ZZ")]
-    [InlineData("9", "Z123456789", HasZero.False, "ZZ")]
-    [InlineData("9", "Z123456789", HasZero.True, "1Z")]
-    public void ZeroCharArgumentUsed(
-        string last, string chars, HasZero zeroChar, string next)
+    [InlineData("", "0123456789", Numeric.Auto, "0")]
+    [InlineData("", "0123456789", Numeric.False, "0")]
+    [InlineData("", "0123456789", Numeric.True, "0")]
+    [InlineData("9", "0123456789", Numeric.Auto, "10")]
+    [InlineData("9", "0123456789", Numeric.False, "00")]
+    [InlineData("9", "0123456789", Numeric.True, "10")]
+    [InlineData("9", "Z123456789", Numeric.Auto, "ZZ")]
+    [InlineData("9", "Z123456789", Numeric.False, "ZZ")]
+    [InlineData("9", "Z123456789", Numeric.True, "1Z")]
+    public void NumericArgumentUsed(
+        string last, string chars, Numeric numeric, string next)
     {
-        var id = new ID(last, chars, zeroChar);
+        var id = new ID(last, chars, numeric);
         Assert.Equal(next, id.Next());
     }
 
     [Fact]
     public void LastMustOnlyUseKnownChars()
     {
-        Action uknownChar = () => new ID("Z123", IDChars.Digits);
+        Action uknownChar = () => new ID("Z123", IDChars.Decimal);
         Assert.Throws<IDException>(uknownChar);
     }
 

@@ -1,8 +1,10 @@
 ﻿using Fmbm.Text;
 
-var id = new ID("00", IDChars.Digits, HasZero.False);
-for (int i = 0; i < 1020; i++)
-{
+var id = new ID(chars: IDChars.LessAmbiguous);
+for(int i = 0; i < 50_000_000; i++){
     id.Next();
 }
-Console.WriteLine(id.Last);
+Console.WriteLine($"{id.Last}");
+
+// Output:
+// 10111110101111000001111111

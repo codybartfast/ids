@@ -2,19 +2,19 @@ namespace Fmbm.Text;
 
 public static class IDChars
 {
-    public static string Digits { get; } = "0123456789";
-    public static string HexLower { get; } = "0123456789abcdef";
-    public static string HexUpper { get; } = "0123456789abcdef";
-    public static string Lower { get; } = "abcdefghijklmnopqrstuvwxyz";
-    public static string Upper { get; } = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    public static string DigitsAndLower { get; } = Digits + Lower;
-    public static string DigitsAndUpper { get; } = Digits + Upper;
-    public static string DigitsAndLowerAndUpper { get; } = DigitsAndLower + Upper;
-    public static string Base64 { get; } = Upper + Lower + Digits + "+/";
-    public static string AsciiPrintableNoSpace { get; } =
-        "!\"#$%&'()*+,-./" + Digits + ":;<=>?@" +
+    public const string Binary = "01";
+    public const string Decimal = Binary + "23456789";
+    public const string HexLower = Decimal + "abcdef";
+    public const string HexUpper = Decimal + "ABCDEF";
+    public const string Lower = "abcdefghijklmnopqrstuvwxyz";
+    public const string Upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    public const string DigitsAndLower = Decimal + Lower;
+    public const string DigitsAndUpper = Decimal + Upper;
+    public const string DigitsAndLowerAndUpper = DigitsAndLower + Upper;
+    public const string Base64 = Upper + Lower + Decimal + "-_";
+    public const string AsciiPrintableNoSpace =
+        "!\"#$%&'()*+,-./" + Decimal + ":;<=>?@" +
         Upper + "[\\]^_`" + Lower + "{|}~";
-    public static string AsciiPrintable { get; } = " " + AsciiPrintableNoSpace;
-    public static string LessAmbiguous { get; } =
-        "23456789abcdefghjkmnpqrstuvwxyz";
+    public const string AsciiPrintable = " " + AsciiPrintableNoSpace;
+    public const string LessAmbiguous = "2345679abcdefghjkmnpqrstuvwxyz";
 }

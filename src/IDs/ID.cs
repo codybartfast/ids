@@ -2,7 +2,7 @@
 
 namespace Fmbm.Text;
 
-public enum HasZero
+public enum Numeric
 {
     Auto = 0,
     True = 1,
@@ -21,23 +21,26 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
         return dict;
     }
 
-    string chars;
-    public string Chars => chars;
-
     string last;
     public string Last => last;
 
+    readonly string chars;
+    public string Chars => chars;
 
-    readonly bool hasZero;
-    public HasZero HasZero => hasZero ? HasZero.True : HasZero.False;
+    readonly bool numeric;
+    public Numeric Numeric => numeric ? Numeric.True : Numeric.False;
 
     readonly List<int> indexes;
-    Dictionary<char, int> charIndexDict;
+
+    readonly Dictionary<char, int> charIndexDict;
     readonly object lockObj = new object();
 
-    public ID(string last, string? chars = null, HasZero hasZero = HasZero.Auto)
+    public ID(
+        string last = "",
+        string chars = IDChars.Decimal,
+        Numeric numeric = Numeric.Auto)
     {
-        chars = chars ?? IDChars.Digits;
+        chars = chars ?? IDChars.Decimal;
         if (chars.Length < 2)
         {
             throw new IDException($"'chars' must have at least 2 members");
@@ -47,12 +50,12 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
             throw new IDException($"'chars' contains duplicate characters");
         }
         this.chars = chars;
-        this.hasZero = hasZero switch
+        this.numeric = numeric switch
         {
-            HasZero.Auto => chars[0] == '0',
-            HasZero.True => true,
-            HasZero.False => false,
-            _ => throw new IDException($"Unexpected ZeroChar value: {hasZero}")
+            Numeric.Auto => chars[0] == '0',
+            Numeric.True => true,
+            Numeric.False => false,
+            _ => throw new IDException($"Unexpected Numeric enum: {numeric}")
         };
         this.indexes = new List<int>(last.Select(c => chars.IndexOf(c)));
         foreach (var c in last)
@@ -87,7 +90,7 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
             }
             indexes[i] = 0;
         }
-        indexes.Insert(0, hasZero && indexes.Count > 0 ? 1 : 0);
+        indexes.Insert(0, numeric && indexes.Count > 0 ? 1 : 0);
         return SetLastFromIndexes();
     }
 
@@ -110,28 +113,26 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
 
         int CompareNonNull(string x, string y)
         {
-            var xInd = 0;
-            var yInd = 0;
-            if (hasZero)
+            int firstSignificant(string s)
             {
-                while (xInd < x.Length - 1 && x[xInd] == chars[0])
+                int index = 0;
+                if (numeric)
                 {
-                    xInd++;
+                    while (index < s.Length - 1 && s[index] == chars[0])
+                    {
+                        index++;
+                    }
                 }
-                while (yInd < y.Length - 1 && y[yInd] == chars[0])
-                {
-                    yInd++;
-                }
+                return index;
             }
-            var significantX = x.Length - xInd;
-            var significantY = y.Length - yInd;
-            if (significantX != significantY)
+
+            var xInd = firstSignificant(x);
+            var yInd = firstSignificant(y);
+            var sigLenX = x.Length - xInd;
+            var sigLenY = y.Length - yInd;
+            if (sigLenX != sigLenY)
             {
-                return significantX - significantY;
-            }
-            else if (significantX == 0)
-            {
-                return 0;
+                return sigLenX - sigLenY;
             }
             else
             {

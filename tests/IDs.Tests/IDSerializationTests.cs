@@ -9,22 +9,22 @@ public class IDSerializationTests
     public void PublicPropertiesUnchanged()
     {
         ID id1, id2;
-        id1 = new ID("123", IDChars.Digits, HasZero.True);
+        id1 = new ID("123", IDChars.Decimal, Numeric.True);
         id2 = JsonSerializer.Deserialize<ID>(JsonSerializer.Serialize(id1))!;
         Assert.Equal(id1.Last, id2.Last);
         Assert.Equal(id1.Chars, id2.Chars);
-        Assert.Equal(id1.HasZero, id2.HasZero);
+        Assert.Equal(id1.Numeric, id2.Numeric);
 
-        id1 = new ID("ABC", "ABCD", HasZero.False);
+        id1 = new ID("ABC", "ABCD", Numeric.False);
         id2 = JsonSerializer.Deserialize<ID>(JsonSerializer.Serialize(id1))!;
         Assert.Equal(id1.Last, id2.Last);
         Assert.Equal(id1.Chars, id2.Chars);
-        Assert.Equal(id1.HasZero, id2.HasZero);
+        Assert.Equal(id1.Numeric, id2.Numeric);
     }
 
-    string DeserializedRestartsAsExpected(HasZero zeroChar)
+    string DeserializedRestartsAsExpected(Numeric numeric)
     {
-        var id = new ID("00", IDChars.Digits, zeroChar);
+        var id = new ID("00", IDChars.Decimal, numeric);
         for (int i = 0; i < 1020; i++)
         {
             var previous = id.Next();
@@ -36,16 +36,16 @@ public class IDSerializationTests
     }
 
     [Fact]
-    public void DeserializedRestartsAsExpectedZero()
+    public void DeserializedRestartsAsExpectedNumeric()
     {
-        var last = DeserializedRestartsAsExpected(HasZero.True);
+        var last = DeserializedRestartsAsExpected(Numeric.True);
         Assert.Equal("1020", last);
     }
 
     [Fact]
-    public void DeserializedRestartsAsExpectedNoZero()
+    public void DeserializedRestartsAsExpectedNonNumeric()
     {
-        var last = DeserializedRestartsAsExpected(HasZero.False);
+        var last = DeserializedRestartsAsExpected(Numeric.False);
         Assert.Equal("920", last);
     }
 }
