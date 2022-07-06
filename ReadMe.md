@@ -13,7 +13,7 @@ Features:
 
 Not suitable for:
 
-* Distributed ID generation
+* Distributed IDs
 * Globally unique IDs
 * IDs requiring a random element (e.g. for security).
 
@@ -151,7 +151,7 @@ DigitsAndLowerAndUpper: 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST
 Length of IDs
 -------------
 
-More charactes will enable shorter ids, but may be less readable.  As examples,
+More characters will enable shorter ids, but may be less readable.  As examples,
 here is the 50,000,000th id produced by diffent sets.
 
 ```csharp
@@ -179,8 +179,8 @@ AsciiPrintable: Y=.j
 
 &nbsp;
 
-Numeric IDs
------------
+Numeric and Nonnumeric IDs
+--------------------------
 
 With Base64 characters the first two char id is `"AA"`.  However, with
 decimal characters the first two char id is `"10"` not `"00"`.  If we consider
@@ -191,16 +191,16 @@ generate `"00"` and `"000"` as ids.
 But `"A"`, `"AA"` and `"AAA"` are typically consdered distinct ids (as with
 spreadsheet columns) and we do want to generate them.
 
-IDs calls this  _numeric_ or _nonnumeric_ behaviour.  Numeric behaviour treats
+IDs calls these  _numeric_ and _nonnumeric_ behaviour.  Numeric behaviour treats
 the first character in `chars` as a zero and it will only be the leftmost
 character for the first id.  Nonnumeric behaviour makes no distinction for the
 first character.
 
-If the first char in the character set is `"0"` then numeric behaviour is used,
-otherwise nonnumeric behaviour is used.  E.g., `Binary`, `Decimal` and
-`HexUpper` ("01", "0123456789" and "0123456789ABCDEF") all start with `0` and so
-the behaviour is numeric. `Base64` (`"ABC..."`) starts with `"A"` so the
-behaviour is nonnumeric.
+If the first char in the character set is `'0'` then numeric behaviour is
+automatically used, otherwise nonnumeric behaviour is used.  E.g., `Binary`,
+`Decimal` and `HexUpper` (`"01"`, `"0123456789"` and `"0123456789ABCDEF"`) all
+start with a `'0'` and so the behaviour is numeric. `Base64` (`"ABC..."`) starts
+with an `'A'` so the behaviour is nonnumeric.
 
 The automatic behaviour can be overriden by specifying a numeric argument of
 `True` or `False`. To specify nonnumeric behaviour:
@@ -219,7 +219,7 @@ for(int i = 0; i < 4; i++){
 // 01
 ```
 
-Similarly letters can be treated numerically so that `A` now acts like a zero.
+Similarly letters can be treated numerically so that `'A'` now acts like a zero.
 
 ```csharp
 var id = new ID(last: "X", chars: IDChars.Upper, numeric: IDNumeric.True);
@@ -230,11 +230,88 @@ for(int i = 0; i < 4; i++){
 // Output:
 // Y
 // Z
-// BA  <-- Z is followed by "BA" instead of  "AA"
+// BA  <-- "Z" is followed by "BA" instead of  "AA"
 // BB
 ```
 
 &nbsp;
 
-Comparing IDs
+Comparing And Sorting
+---------------------
+
+ID implements the `Comparerer<String>` and `IEqualityComparer<string>`
+interfaces that it can be used to compare the ids that it generates.  Here ids
+generated using the chars `"Dog!"` are sorted alphabetically and then returned
+to their original order by using `ID` as a string comparer.
+
+```csharp
+var id = new ID(chars: "Dog!");
+var ids = new List<string>();
+for (int k = 0; k < 9; k++)
+{
+    ids.Add(id.Next());
+}
+
+Console.WriteLine(String.Join(", ", ids));
+
+ids.Sort();
+Console.WriteLine(String.Join(", ", ids));
+
+ids.Sort(id);
+Console.WriteLine(String.Join(", ", ids));
+
+// Output:
+// D, o, g, !, DD, Do, Dg, D!, oD
+// !, D, D!, DD, Dg, Do, g, o, oD
+// D, o, g, !, DD, Do, Dg, D!, oD
+```
+
+The comparison respects whether the behviour is numeric or nonnumeric.  Here is
+the default numeric behavior for decimals:
+
+```csharp
+var id = new ID();
+var ids = new List<string> { "1", "2", "00", "8", "9" };
+ids.Sort(id);
+Console.WriteLine(String.Join(", ", ids));
+Console.WriteLine(id.Equals("0", "00"));
+
+// Output:
+// 00, 1, 2, 8, 9
+// True
+```
+
+And the nonnumeric behaviour:
+
+```csharp
+var id = new ID(numeric: IDNumeric.False);
+var ids = new List<string> { "1", "2", "00", "8", "9" };
+ids.Sort(id);
+Console.WriteLine(String.Join(", ", ids));
+Console.WriteLine(id.Equals("0", "00"));
+
+// Output:
+// 1, 2, 8, 9, 00
+// False
+```
+
+&nbsp;
+
+Leading Zeros
 -------------
+
+Leading zeros are maintained in both numeric and nonnumeric `ID`s:
+
+```csharp
+var id = new ID("0007");
+for(int i = 0; i < 5; i++){
+    Console.WriteLine(id.Next());
+}
+
+// Output:
+// 0008
+// 0009
+// 0010
+// 0011
+// 0012
+```
