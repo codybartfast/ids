@@ -2,7 +2,7 @@
 
 namespace Fmbm.Text;
 
-public enum Numeric
+public enum IDNumeric
 {
     Auto = 0,
     True = 1,
@@ -28,7 +28,7 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
     public string Chars => chars;
 
     readonly bool numeric;
-    public Numeric Numeric => numeric ? Numeric.True : Numeric.False;
+    public IDNumeric Numeric => numeric ? IDNumeric.True : IDNumeric.False;
 
     readonly List<int> indexes;
 
@@ -38,7 +38,7 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
     public ID(
         string last = "",
         string chars = IDChars.Decimal,
-        Numeric numeric = Numeric.Auto)
+        IDNumeric numeric = IDNumeric.Auto)
     {
         chars = chars ?? IDChars.Decimal;
         if (chars.Length < 2)
@@ -52,9 +52,9 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
         this.chars = chars;
         this.numeric = numeric switch
         {
-            Numeric.Auto => chars[0] == '0',
-            Numeric.True => true,
-            Numeric.False => false,
+            IDNumeric.Auto => chars[0] == '0',
+            IDNumeric.True => true,
+            IDNumeric.False => false,
             _ => throw new IDException($"Unexpected Numeric enum: {numeric}")
         };
         this.indexes = new List<int>(last.Select(c => chars.IndexOf(c)));

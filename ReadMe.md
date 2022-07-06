@@ -1,6 +1,6 @@
 # IDs
 
-Simple, customizable string ID generator.
+Sequential string ID generator.
 
 Features:
 
@@ -38,7 +38,9 @@ Contents
 Basic Usage
 -----------
 
-Without any constructor arguments, ID uses the digits 0-9.  Its behaviour is similar to incrementing an integer except it returns `string`s and is thread safe.  The initial value of `Last` is an empty string and the first value 
+Without any constructor arguments, ID uses the digits 0-9.  Its behaviour is
+similar to incrementing an integer except it returns `string`s and is thread
+safe.  The initial value of `Last` is an empty string and the first value
 created by `Next()` will be `"0"`.
 
 ```csharp
@@ -57,6 +59,8 @@ for (int i = 0; i < 3; i++)
 // Last:0, Next:1
 // Last:1, Next:2
 ```
+
+&nbsp;
 
 Continuing a sequence
 ---------------------
@@ -86,6 +90,8 @@ Console.WriteLine($"Last:{originalID.Last}, Next:{originalID.Next()}");
 // Last:37, Next:38
 ```
 
+&nbsp;
+
 Custom Characters
 -----------------
 
@@ -111,6 +117,8 @@ for (int k = 0; k < 9; k++)
 // D!
 // oD
 ```
+
+&nbsp;
 
 Predefined Sets of Characters
 -----------------------------
@@ -138,6 +146,8 @@ DigitsAndLowerAndUpper: 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST
 
 ```
 
+&nbsp;
+
 Length of IDs
 -------------
 
@@ -159,7 +169,7 @@ Console.WriteLine($"{id.Last}");
 Chars           50,000,000th ID
 =====           ===============
 Binary:         10111110101111000001111111
-Dog!:           oggoogog!Dgg! 
+"Dog!":         oggoogog!Dgg! 
 Decimal:        49999999
 Hex:            2FAF07F
 LessAmbiguous:  32qujp
@@ -167,30 +177,36 @@ Base64:         B9uA_
 AsciiPrintable: Y=.j
 ```
 
+&nbsp;
+
 Numeric IDs
 -----------
 
 With Base64 characters the first two char id is `"AA"`.  However, with
 decimal characters the first two char id is `"10"` not `"00"`.  If we consider
-id strings as representing numbers then `"0"`, `"00"` and `"000"` represent the same number, `0`.  To avoid ambiguity or duplication we typically do not want to
+id strings as representing numbers then `"0"`, `"00"` and `"000"` represent the
+same number, `0`.  To avoid ambiguity or duplication we typically do not want to
 generate `"00"` and `"000"` as ids.
 
-But `"A"`, `"AA"` and `"AAA"` are typically consdered different ids (as with
+But `"A"`, `"AA"` and `"AAA"` are typically consdered distinct ids (as with
 spreadsheet columns) and we do want to generate them.
 
-These are called  _numeric_ and _nonnumeric_ behaviour.  Numeric behaviour
-treats the first character in `chars` as a zero and it will only be the leftmost character for the first id.  Nonnumeric behaviour makes no distinction for the
-first character.  If the first char in the character set is `"0"` then the
-behaviour is numeric, otherwise it is nonnumeric.  E.g., `Binary`, `Decimal` and
+IDs calls this  _numeric_ or _nonnumeric_ behaviour.  Numeric behaviour treats
+the first character in `chars` as a zero and it will only be the leftmost
+character for the first id.  Nonnumeric behaviour makes no distinction for the
+first character.
+
+If the first char in the character set is `"0"` then numeric behaviour is used,
+otherwise nonnumeric behaviour is used.  E.g., `Binary`, `Decimal` and
 `HexUpper` ("01", "0123456789" and "0123456789ABCDEF") all start with `0` and so
 the behaviour is numeric. `Base64` (`"ABC..."`) starts with `"A"` so the
 behaviour is nonnumeric.
 
-This behaviour can be overriden by specifying the numeric argument as `True`,
-`False` or `Auto`. To specify nonnumeric behaviour:
+The automatic behaviour can be overriden by specifying a numeric argument of
+`True` or `False`. To specify nonnumeric behaviour:
 
 ```csharp
-var id = new ID(last: "7", chars: IDChars.Decimal, numeric: Numeric.False);
+var id = new ID(last: "7", chars: IDChars.Decimal, numeric: IDNumeric.False);
 
 for(int i = 0; i < 4; i++){
     Console.WriteLine(id.Next());
@@ -203,10 +219,10 @@ for(int i = 0; i < 4; i++){
 // 01
 ```
 
-Similarly letters can be treated numerically so that `A` is acts like a zero.
+Similarly letters can be treated numerically so that `A` now acts like a zero.
 
 ```csharp
-var id = new ID(last: "X", chars: IDChars.Upper, numeric: Numeric.True);
+var id = new ID(last: "X", chars: IDChars.Upper, numeric: IDNumeric.True);
 for(int i = 0; i < 4; i++){
     Console.WriteLine(id.Next());
 }
@@ -218,5 +234,7 @@ for(int i = 0; i < 4; i++){
 // BB
 ```
 
+&nbsp;
 
-compare
+Comparing IDs
+-------------

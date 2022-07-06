@@ -12,7 +12,7 @@ public class IDCompareTests
     [Fact]
     public void NumericIdIsWellOrdered()
     {
-        var id = new ID(string.Empty, IDChars.AsciiPrintable, Numeric.True);
+        var id = new ID(string.Empty, IDChars.AsciiPrintable, IDNumeric.True);
         for (int i = 0; i < 10000; i++)
         {
             var previous = id.Last;
@@ -26,7 +26,7 @@ public class IDCompareTests
     [Fact]
     public void NonNumericIdIsWellOrdered()
     {
-        var id = new ID(string.Empty, IDChars.AsciiPrintable, Numeric.False);
+        var id = new ID(string.Empty, IDChars.AsciiPrintable, IDNumeric.False);
         for (int i = 0; i < 10000; i++)
         {
             var previous = id.Last;
@@ -40,7 +40,7 @@ public class IDCompareTests
     [Fact]
     public void NumericIdIsWellOrderedWhenPadded()
     {
-        var id = new ID("010", IDChars.Decimal, Numeric.True);
+        var id = new ID("010", IDChars.Decimal, IDNumeric.True);
         for (int i = 0; i < 10000; i++)
         {
             var previous = id.Last;
@@ -54,7 +54,7 @@ public class IDCompareTests
     [Fact]
     public void NonNumericIdIsWellOrderedWhenPadded()
     {
-        var id = new ID("010", IDChars.AsciiPrintable, Numeric.False);
+        var id = new ID("010", IDChars.AsciiPrintable, IDNumeric.False);
         for (int i = 0; i < 10000; i++)
         {
             var previous = id.Last;
