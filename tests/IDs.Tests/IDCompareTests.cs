@@ -64,4 +64,13 @@ public class IDCompareTests
             Assert.True(IsPos(id.Compare(id.Last, previous)));
         }
     }
+
+    [Fact]
+    public void LargeLastIsOK()
+    {
+        var id = new ID("999999999999999999999999999999999999999999999999");
+        Assert.Equal(
+            "1000000000000000000000000000000000000000000000000",
+            id.Next());
+    }
 }

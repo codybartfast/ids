@@ -1,11 +1,14 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 namespace Fmbm.Text;
 
 public partial class ID : IComparer<string>, IEqualityComparer<string>
 {
-    string last;
-    public string Last => last;
+    string current;
+    private int[] indexes = new int[4];
+    private int length;
+    public string Last => current;
 
     readonly string chars;
     public string Chars => chars;
@@ -13,9 +16,7 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
     readonly bool numeric;
     public bool Numeric => numeric;
 
-    readonly List<int> indexes;
-
-    readonly Dictionary<char, int> charIndexDict;
+    readonly IImmutableDictionary<char, int> charIndexDict;
     readonly object lockObj = new object();
 
     public ID(
@@ -25,62 +26,91 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
     [JsonConstructor]
     public ID(string last, string chars, bool numeric)
     {
-        chars = chars ?? IDChars.Decimal;
         if (chars.Length < 2)
         {
             throw new IDException($"'chars' must have at least 2 members");
         }
+
         if (chars.Length > chars.Distinct().Count())
         {
             throw new IDException($"'chars' contains duplicate characters");
         }
-        this.chars = chars;
-        this.numeric = numeric;
-        this.indexes = new List<int>(last.Select(c => chars.IndexOf(c)));
+
         foreach (var c in last)
         {
-            if (!this.chars.Contains(c))
+            if (!chars.Contains(c))
             {
                 throw new IDException($"Unexpected character '{c}' in 'last'.");
             }
         }
-        this.last = last;
-        this.charIndexDict = MakeDict(chars);
 
-        Dictionary<char, int> MakeDict(string chars)
-        {
-            var dict = new Dictionary<char, int>();
-            for (var i = 0; i < chars.Length; i++)
-            {
-                dict[chars[i]] = i;
-            }
-            return dict;
-        }
+        this.current = last;
+        this.chars = chars;
+        this.numeric = numeric;
+
+        charIndexDict =
+            chars
+            .Select((c, i) => new KeyValuePair<char, int>(c, i))
+            .ToImmutableDictionary();
+
+        SetIndexesFromCurrent();
+    }
+
+    void EnlargeIndexes()
+    {
+        Array.Resize(ref indexes, length * 2);
     }
 
     public string Next()
     {
         lock (lockObj)
         {
-            for (var i = indexes.Count - 1; i >= 0; i--)
+            for (var i = 0; i < length; i++)
             {
                 if (indexes[i] < chars.Length - 1)
                 {
                     indexes[i] += 1;
-                    return SetLastFromIndexes();
+                    return SetCurrentFromIndexes();
                 }
                 indexes[i] = 0;
             }
-            indexes.Insert(0, (numeric && indexes.Count > 0) ? 1 : 0);
-            return SetLastFromIndexes();
+            if (length == indexes.Length)
+            {
+                EnlargeIndexes();
+            }
+            indexes[length] = (numeric && length > 0) ? 1 : 0;
+            length++;
+            return SetCurrentFromIndexes();
         }
     }
 
-    string SetLastFromIndexes()
+    void SetIndexesFromCurrent()
     {
-        var cs = indexes.Select(i => chars[i]);
-        last = new string(cs.ToArray());
-        return last;
+        length = current.Length;
+        while (current.Length > indexes.Length)
+        {
+            EnlargeIndexes();
+        }
+        for (
+            int currentCharsIdx = 0, indexesIdx = length - 1;
+            currentCharsIdx < length;
+            currentCharsIdx++, indexesIdx--)
+        {
+            indexes[indexesIdx] = charIndexDict[current[currentCharsIdx]];
+        }
+    }
+
+    string SetCurrentFromIndexes()
+    {
+        var currentChars = new char[length];
+        for (
+            int currentCharsIdx = 0, indexesIdx = length - 1;
+            currentCharsIdx < length;
+            currentCharsIdx++, indexesIdx--)
+        {
+            currentChars[currentCharsIdx] = chars[indexes[indexesIdx]];
+        }
+        return (current = new string(currentChars));
     }
 
     public int Compare(string? x, string? y)
