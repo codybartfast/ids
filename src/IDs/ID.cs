@@ -4,16 +4,6 @@ namespace Fmbm.Text;
 
 public partial class ID : IComparer<string>, IEqualityComparer<string>
 {
-    static Dictionary<char, int> MakeDict(string chars)
-    {
-        var dict = new Dictionary<char, int>();
-        for (var i = 0; i < chars.Length; i++)
-        {
-            dict[chars[i]] = i;
-        }
-        return dict;
-    }
-
     string last;
     public string Last => last;
 
@@ -56,31 +46,34 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
         }
         this.last = last;
         this.charIndexDict = MakeDict(chars);
+
+        Dictionary<char, int> MakeDict(string chars)
+        {
+            var dict = new Dictionary<char, int>();
+            for (var i = 0; i < chars.Length; i++)
+            {
+                dict[chars[i]] = i;
+            }
+            return dict;
+        }
     }
 
     public string Next()
     {
         lock (lockObj)
         {
-            return Increment();
-        }
-    }
-
-    string Increment()
-    {
-        for (var i = indexes
-        .Count - 1; i >= 0; i--)
-        {
-            if (indexes
-            [i] < chars.Length - 1)
+            for (var i = indexes.Count - 1; i >= 0; i--)
             {
-                indexes[i] += 1;
-                return SetLastFromIndexes();
+                if (indexes[i] < chars.Length - 1)
+                {
+                    indexes[i] += 1;
+                    return SetLastFromIndexes();
+                }
+                indexes[i] = 0;
             }
-            indexes[i] = 0;
+            indexes.Insert(0, (numeric && indexes.Count > 0) ? 1 : 0);
+            return SetLastFromIndexes();
         }
-        indexes.Insert(0, numeric && indexes.Count > 0 ? 1 : 0);
-        return SetLastFromIndexes();
     }
 
     string SetLastFromIndexes()
