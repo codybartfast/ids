@@ -15,11 +15,11 @@ public class IDConstructorTests
     [InlineData("1234", "1235")]
     public void LastAsExpected(string last, string next)
     {
-        var idT = new ID(last, IDChars.Decimal, IDNumeric.True);
+        var idT = new ID(last, IDChars.Decimal, true);
         Assert.Equal(last, idT.Last);
         Assert.Equal(next, idT.Next());
         Assert.Equal(next, idT.Last);
-        var idF = new ID(last, IDChars.Decimal, IDNumeric.False);
+        var idF = new ID(last, IDChars.Decimal, false);
         Assert.Equal(last, idF.Last);
     }
 
@@ -32,7 +32,7 @@ public class IDConstructorTests
     {
         string GetLast(string last, string chars)
         {
-            var id = new ID(last, chars, IDNumeric.True);
+            var id = new ID(last, chars, true);
             for (var i = 0; i < 1000; i++)
             {
                 id.Next();
@@ -43,17 +43,17 @@ public class IDConstructorTests
     }
 
     [Theory]
-    [InlineData("", "0123456789", IDNumeric.Auto, "0")]
-    [InlineData("", "0123456789", IDNumeric.False, "0")]
-    [InlineData("", "0123456789", IDNumeric.True, "0")]
-    [InlineData("9", "0123456789", IDNumeric.Auto, "10")]
-    [InlineData("9", "0123456789", IDNumeric.False, "00")]
-    [InlineData("9", "0123456789", IDNumeric.True, "10")]
-    [InlineData("9", "Z123456789", IDNumeric.Auto, "ZZ")]
-    [InlineData("9", "Z123456789", IDNumeric.False, "ZZ")]
-    [InlineData("9", "Z123456789", IDNumeric.True, "1Z")]
+    [InlineData("", "0123456789", null, "0")]
+    [InlineData("", "0123456789", false, "0")]
+    [InlineData("", "0123456789", true, "0")]
+    [InlineData("9", "0123456789", null, "10")]
+    [InlineData("9", "0123456789", false, "00")]
+    [InlineData("9", "0123456789", true, "10")]
+    [InlineData("9", "Z123456789", null, "ZZ")]
+    [InlineData("9", "Z123456789", false, "ZZ")]
+    [InlineData("9", "Z123456789", true, "1Z")]
     public void NumericArgumentUsed(
-        string last, string chars, IDNumeric numeric, string next)
+        string last, string chars, bool? numeric, string next)
     {
         var id = new ID(last, chars, numeric);
         Assert.Equal(next, id.Next());

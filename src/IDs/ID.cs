@@ -1,13 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-
+using System.Text.Json.Serialization;
 namespace Fmbm.Text;
-
-public enum IDNumeric
-{
-    Auto = 0,
-    True = 1,
-    False = 2
-}
 
 public partial class ID : IComparer<string>, IEqualityComparer<string>
 {
@@ -28,7 +21,7 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
     public string Chars => chars;
 
     readonly bool numeric;
-    public IDNumeric Numeric => numeric ? IDNumeric.True : IDNumeric.False;
+    public bool Numeric => numeric;
 
     readonly List<int> indexes;
 
@@ -36,9 +29,11 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
     readonly object lockObj = new object();
 
     public ID(
-        string last = "",
-        string chars = IDChars.Decimal,
-        IDNumeric numeric = IDNumeric.Auto)
+        string last = "", string chars = IDChars.Decimal, bool? numeric = null)
+        : this(last, chars, numeric ?? chars[0] == '0') { }
+
+    [JsonConstructor]
+    public ID(string last, string chars, bool numeric)
     {
         chars = chars ?? IDChars.Decimal;
         if (chars.Length < 2)
@@ -50,13 +45,7 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
             throw new IDException($"'chars' contains duplicate characters");
         }
         this.chars = chars;
-        this.numeric = numeric switch
-        {
-            IDNumeric.Auto => chars[0] == '0',
-            IDNumeric.True => true,
-            IDNumeric.False => false,
-            _ => throw new IDException($"Unexpected Numeric enum: {numeric}")
-        };
+        this.numeric = numeric;
         this.indexes = new List<int>(last.Select(c => chars.IndexOf(c)));
         foreach (var c in last)
         {

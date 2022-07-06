@@ -206,7 +206,7 @@ The automatic behaviour can be overriden by specifying a numeric argument of
 `True` or `False`. To specify nonnumeric behaviour:
 
 ```csharp
-var id = new ID(last: "7", chars: IDChars.Decimal, numeric: IDNumeric.False);
+var id = new ID(last: "7", chars: IDChars.Decimal, numeric: false);
 
 for(int i = 0; i < 4; i++){
     Console.WriteLine(id.Next());
@@ -222,7 +222,7 @@ for(int i = 0; i < 4; i++){
 Similarly letters can be treated numerically so that `'A'` now acts like a zero.
 
 ```csharp
-var id = new ID(last: "X", chars: IDChars.Upper, numeric: IDNumeric.True);
+var id = new ID(last: "X", chars: IDChars.Upper, numeric: true);
 for(int i = 0; i < 4; i++){
     Console.WriteLine(id.Next());
 }
@@ -284,7 +284,7 @@ Console.WriteLine(id.Equals("0", "00"));
 And the nonnumeric behaviour:
 
 ```csharp
-var id = new ID(numeric: IDNumeric.False);
+var id = new ID(numeric: false);
 var ids = new List<string> { "1", "2", "00", "8", "9" };
 ids.Sort(id);
 Console.WriteLine(String.Join(", ", ids));
