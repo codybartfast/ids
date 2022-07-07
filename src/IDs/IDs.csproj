@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>1.0.0-beta.1</Version>
+    <Version>1.0.0-beta.2</Version>
     <Description>Sequential string ID generator.</Description>
     <AssemblyName>Fmbm.IDs</AssemblyName>
     <AssemblyTitle>Fmbm.IDs</AssemblyTitle>
