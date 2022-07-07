@@ -6,7 +6,7 @@
     <AssemblyName>Fmbm.IDs</AssemblyName>
     <AssemblyTitle>Fmbm.IDs</AssemblyTitle>
     <Authors>John Donnellan</Authors>
-    <PackageTags>id;custom;string;sequential;FMBM</PackageTags>
+    <PackageTags>id;custom;string;sequential;fmbm</PackageTags>
     <PackageReadmeFile>ReadMe.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/codybartfast/ids</RepositoryUrl> 
