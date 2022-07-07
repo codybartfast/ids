@@ -1,14 +1,7 @@
 ﻿using System.Diagnostics;
+using System.Numerics;
 using Fmbm.Text;
 
-var id = new ID("");
+var id = new ID("CAS", IDChars.Upper);
+Console.WriteLine(id.Next());
 
-var sw = new Stopwatch();
-sw.Start();
-
-for (int i = 0; i < 19_000_000; i++)
-{
-    id.Next();
-}
-
-Console.WriteLine(sw.Elapsed);

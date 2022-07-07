@@ -1,14 +1,18 @@
 ﻿using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
+
 namespace Fmbm.Text;
 
 public partial class ID : IComparer<string>, IEqualityComparer<string>
 {
-    string current;
+    // 'indexes' represents the last id that was returned.  It contains the
+    // index in 'chars' of the charaters that formed the last id, but in reverse
+    // order.  If 'chars' is "ABC...XYZ" and the last id was "CAT" then the
+    // first three values in 'indexes' are 19, 0, and 2.
     private int[] indexes = new int[4];
+    private string last;
     private int length;
-    public string Last => current;
+    public string Last => last;
 
     readonly string chars;
     public string Chars => chars;
@@ -16,9 +20,12 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
     readonly bool numeric;
     public bool Numeric => numeric;
 
-    readonly IImmutableDictionary<char, int> charIndexDict;
+    // maps a character to its index in 'chars'
+    readonly ImmutableDictionary<char, int> charIndexDict;
     readonly object lockObj = new object();
 
+    // Two constructors because JsonSerializer does not seem to like
+    // deserializing  `bool?`
     public ID(
         string last = "", string chars = IDChars.Decimal, bool? numeric = null)
         : this(last, chars, numeric ?? chars[0] == '0') { }
@@ -44,7 +51,7 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
             }
         }
 
-        this.current = last;
+        this.last = last;
         this.chars = chars;
         this.numeric = numeric;
 
@@ -53,12 +60,7 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
             .Select((c, i) => new KeyValuePair<char, int>(c, i))
             .ToImmutableDictionary();
 
-        SetIndexesFromCurrent();
-    }
-
-    void EnlargeIndexes()
-    {
-        Array.Resize(ref indexes, length * 2);
+        SetIndexesFromLast();
     }
 
     public string Next()
@@ -70,47 +72,56 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
                 if (indexes[i] < chars.Length - 1)
                 {
                     indexes[i] += 1;
-                    return SetCurrentFromIndexes();
+                    return SetLastFromIndexes();
                 }
-                indexes[i] = 0;
+                else
+                {
+                    indexes[i] = 0;
+                }
             }
+            // If reach here, need to make the id longer. E.g., "999" -> "1000"
             if (length == indexes.Length)
             {
                 EnlargeIndexes();
             }
             indexes[length] = (numeric && length > 0) ? 1 : 0;
             length++;
-            return SetCurrentFromIndexes();
+            return SetLastFromIndexes();
         }
     }
 
-    void SetIndexesFromCurrent()
+    string SetLastFromIndexes()
     {
-        length = current.Length;
-        while (current.Length > indexes.Length)
+        var lastChars = new char[length];
+        for (
+            int lastCharsIdx = 0, indexesIdx = length - 1;
+            lastCharsIdx < length;
+            lastCharsIdx++, indexesIdx--)
+        {
+            lastChars[lastCharsIdx] = chars[indexes[indexesIdx]];
+        }
+        return (last = new string(lastChars));
+    }
+
+    void SetIndexesFromLast()
+    {
+        length = last.Length;
+        while (last.Length > indexes.Length)
         {
             EnlargeIndexes();
         }
         for (
-            int currentCharsIdx = 0, indexesIdx = length - 1;
-            currentCharsIdx < length;
-            currentCharsIdx++, indexesIdx--)
+            int lastCharsIdx = 0, indexesIdx = length - 1;
+            lastCharsIdx < length;
+            lastCharsIdx++, indexesIdx--)
         {
-            indexes[indexesIdx] = charIndexDict[current[currentCharsIdx]];
+            indexes[indexesIdx] = charIndexDict[last[lastCharsIdx]];
         }
     }
 
-    string SetCurrentFromIndexes()
+    void EnlargeIndexes()
     {
-        var currentChars = new char[length];
-        for (
-            int currentCharsIdx = 0, indexesIdx = length - 1;
-            currentCharsIdx < length;
-            currentCharsIdx++, indexesIdx--)
-        {
-            currentChars[currentCharsIdx] = chars[indexes[indexesIdx]];
-        }
-        return (current = new string(currentChars));
+        Array.Resize(ref indexes, length * 2);
     }
 
     public int Compare(string? x, string? y)
@@ -130,6 +141,7 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
                 int index = 0;
                 if (numeric)
                 {
+                    // if numeric adavance past leading zeros
                     while (index < s.Length - 1 && s[index] == chars[0])
                     {
                         index++;
@@ -165,8 +177,8 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
         return Compare(x, y) == 0;
     }
 
-    public int GetHashCode([DisallowNull] string str)
+    public int GetHashCode(string x)
     {
-        return str.GetHashCode();
+        return x.GetHashCode();
     }
 }
