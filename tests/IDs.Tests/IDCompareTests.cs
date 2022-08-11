@@ -73,4 +73,11 @@ public class IDCompareTests
             "1000000000000000000000000000000000000000000000000",
             id.Next());
     }
+
+    [Fact]
+    public void MaxReturnsGreatest(){
+        var ids = new ID();
+        var vals = new []{"2", "1", "4", "3"};
+        Assert.Equal("4", ids.Max(vals));
+    }
 }

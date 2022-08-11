@@ -128,6 +128,21 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
         Array.Resize(ref indexes, length * 2);
     }
 
+    public string Max(string x, string y)
+    {
+        return Compare(x, y) >= 0 ? x : y;
+    }
+
+    public string Max(IEnumerable<string> ids)
+    {
+        string max = "";
+        foreach (var id in ids)
+        {
+            max = Max(max, id);
+        }
+        return max;
+    }
+
     public int Compare(string? x, string? y)
     {
         return (x, y) switch
