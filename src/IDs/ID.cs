@@ -27,8 +27,12 @@ public partial class ID : IComparer<string>, IEqualityComparer<string>
     // Two constructors because JsonSerializer does not seem to like
     // deserializing  `bool?`
     public ID(
-        string last = "", string chars = IDChars.Decimal, bool? numeric = null)
-        : this(last, chars, numeric ?? chars[0] == '0') { }
+        string? last = null, string? chars = null, bool? numeric = null)
+        : this(
+            last ?? "",
+            chars ?? IDChars.Decimal,
+            numeric ?? (chars ?? IDChars.Decimal)[0] == '0')
+    { }
 
     [JsonConstructor]
     public ID(string last, string chars, bool numeric)
