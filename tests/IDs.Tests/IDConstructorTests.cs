@@ -79,4 +79,31 @@ public class IDConstructorTests
         Action twoChars = () => new ID("", "1");
         Assert.Throws<IDException>(twoChars);
     }
+
+    class Fruit
+    {
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+    }
+
+    Fruit[] fruit = new[]{
+            new Fruit{Id = "2", Name = "Banana"},
+            new Fruit{Id = "1", Name = "Apple"},
+            new Fruit{Id = "4", Name = "Durian"},
+            new Fruit{Id = "3", Name = "Cherry"},
+        };
+
+    [Fact]
+    public void FromExistingWithDefaults()
+    {
+        var id = ID.FromExisting(fruit, f => f.Id!);
+        Assert.Equal("5", id.Next());
+    }
+
+    [Fact]
+    public void FromExistingWithExplicit()
+    {
+        var id = ID.FromExisting(fruit, f => f.Id!, "01234", false);
+        Assert.Equal("00", id.Next());
+    }
 }

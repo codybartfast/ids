@@ -75,9 +75,10 @@ public class IDCompareTests
     }
 
     [Fact]
-    public void MaxReturnsGreatest(){
+    public void MaxReturnsGreatest()
+    {
         var ids = new ID();
-        var vals = new []{"2", "1", "4", "3"};
+        var vals = new[] { "2", "1", "4", "3" };
         Assert.Equal("4", ids.Max(vals));
     }
 }

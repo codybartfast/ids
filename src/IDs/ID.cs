@@ -5,6 +5,18 @@ namespace Fmbm.Text;
 
 public partial class ID : IComparer<string>, IEqualityComparer<string>
 {
+    public static ID FromExisting<TItem>(
+        IEnumerable<TItem> items,
+        Func<TItem, string> getId,
+        string? chars = null,
+        bool? numeric = null)
+    {
+        var comp = new ID(null, chars, numeric);
+        var existingIds = items.Select(getId);
+        var last = comp.Max(existingIds);
+        return new ID(last, chars, numeric);
+    }
+
     // 'indexes' represents the last id that was returned.  It contains the
     // index in 'chars' of the charaters that formed the last id, but in reverse
     // order.  If 'chars' is "ABC...XYZ" and the last id was "CAT" then the
